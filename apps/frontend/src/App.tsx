@@ -8,18 +8,16 @@ import { useSocket } from "./useSocket";
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { started, color, moves, initGame, sendMove } = useSocket(user);
+  const { started, color, moves, initGame, sendMove, connected } = useSocket(user);
   const [chess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
 
   useEffect(() => {
-    // Current session check karo
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Auth state change listen karo
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -79,17 +77,18 @@ export default function App() {
       {!started ? (
         <button
           onClick={initGame}
+          disabled={!connected}
           style={{
             padding: "12px 32px",
             fontSize: "18px",
-            backgroundColor: "#769656",
+            backgroundColor: connected ? "#769656" : "#444",
             color: "white",
             border: "none",
             borderRadius: "8px",
-            cursor: "pointer"
+            cursor: connected ? "pointer" : "not-allowed"
           }}
         >
-          New Game
+          {connected ? "New Game" : "Connecting..."}
         </button>
       ) : (
         <>
