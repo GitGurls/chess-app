@@ -1,0 +1,17 @@
+{
+  "name": "ws",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "ws": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "@types/ws": "*",
+    "ts-node": "*",
+    "typescript": "*"
+  }
+}
