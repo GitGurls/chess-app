@@ -3,7 +3,7 @@ import { Game } from "./Game";
 
 export class GameManager {
   private games: Game[];
-  private pendingPlayer: WebSocket | null;  // koi wait kar raha hai?
+  private pendingPlayer: WebSocket | null;
 
   constructor() {
     this.games = [];
@@ -12,26 +12,33 @@ export class GameManager {
 
   addPlayer(socket: WebSocket) {
     socket.on("message", (data) => {
-      const message = JSON.parse(data.toString());
-      this.handleMessage(socket, message);
+      try {
+        const message = JSON.parse(data.toString());
+        this.handleMessage(socket, message);
+      } catch (e) {
+        console.log("Invalid message:", e);
+      }
     });
 
     socket.on("close", () => {
-      // Agar pending player disconnect ho gaya
       if (this.pendingPlayer === socket) {
         this.pendingPlayer = null;
+        console.log("Pending player left — queue clear");
       }
+      // Game se bhi remove karo
+      this.games = this.games.filter(
+        g => g.player1 !== socket && g.player2 !== socket
+      );
     });
   }
 
   private handleMessage(socket: WebSocket, message: any) {
     if (message.type === "init_game") {
       if (this.pendingPlayer === null) {
-        // Pehla player — wait karwao
         this.pendingPlayer = socket;
         console.log("Player 1 wait kar raha hai...");
-      } else {
-        // Doosra player aaya — game banao!
+      } else if (this.pendingPlayer !== socket) {
+        // Doosra player aaya
         const game = new Game(this.pendingPlayer, socket);
         this.games.push(game);
         this.pendingPlayer = null;
@@ -40,7 +47,6 @@ export class GameManager {
     }
 
     if (message.type === "move") {
-      // Kaunsi game mein ye player hai dhundo
       const game = this.games.find(
         g => g.player1 === socket || g.player2 === socket
       );
