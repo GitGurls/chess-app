@@ -50,7 +50,6 @@
 
 
 
-
 import { useEffect, useRef, useState } from "react";
 
 export type Move = {
@@ -60,7 +59,6 @@ export type Move = {
 
 export function useSocket(user: any) {
   const socketRef = useRef<WebSocket | null>(null);
-
   const [connected, setConnected] = useState(false);
   const [started, setStarted] = useState(false);
   const [color, setColor] = useState<"white" | "black">("white");
@@ -70,11 +68,7 @@ export function useSocket(user: any) {
     if (!user) return;
 
     console.log("Creating websocket connection...");
-
-    const ws = new WebSocket(
-      "wss://chess-app-gpf1.onrender.com"
-    );
-
+    const ws = new WebSocket("wss://chess-app-gpf1.onrender.com");
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -87,35 +81,22 @@ export function useSocket(user: any) {
     };
 
     ws.onclose = (event) => {
-      console.log(
-        "❌ WS Closed",
-        event.code,
-        event.reason
-      );
-
+      console.log("❌ WS Closed", event.code, event.reason);
       setConnected(false);
     };
 
     ws.onmessage = (event) => {
       console.log("📩 Incoming:", event.data);
-
       const message = JSON.parse(event.data);
 
       if (message.type === "init_game") {
-        console.log(
-          "🎮 Game Started",
-          message.payload.color
-        );
-
+        console.log("🎮 Game Started", message.payload.color);
         setColor(message.payload.color);
         setStarted(true);
       }
 
       if (message.type === "move") {
-        setMoves((prev) => [
-          ...prev,
-          message.payload.move,
-        ]);
+        setMoves((prev) => [...prev, message.payload.move]);
       }
     };
 
@@ -123,23 +104,12 @@ export function useSocket(user: any) {
       console.log("Closing websocket...");
       ws.close();
     };
-  }, [user]);
+  }, [user?.id]); // ← sirf yahi badla hai
 
   const initGame = () => {
-    console.log(
-      "🎮 New Game Clicked",
-      socketRef.current?.readyState
-    );
-
-    if (
-      socketRef.current &&
-      socketRef.current.readyState === WebSocket.OPEN
-    ) {
-      socketRef.current.send(
-        JSON.stringify({
-          type: "init_game",
-        })
-      );
+    console.log("🎮 New Game Clicked", socketRef.current?.readyState);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: "init_game" }));
     } else {
       console.log("⚠️ Socket not open");
     }
@@ -147,28 +117,12 @@ export function useSocket(user: any) {
 
   const sendMove = (move: Move) => {
     console.log("♟ Sending Move:", move);
-
-    if (
-      socketRef.current &&
-      socketRef.current.readyState === WebSocket.OPEN
-    ) {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(
-        JSON.stringify({
-          type: "move",
-          payload: {
-            move,
-          },
-        })
+        JSON.stringify({ type: "move", payload: { move } })
       );
     }
   };
 
-  return {
-    started,
-    color,
-    moves,
-    initGame,
-    sendMove,
-    connected,
-  };
+  return { started, color, moves, initGame, sendMove, connected };
 }
