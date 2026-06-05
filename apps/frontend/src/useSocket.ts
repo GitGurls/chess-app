@@ -27,9 +27,15 @@ export function useSocket(user: any) {
     return () => ws.close();
   }, [user]);
 
-  const initGame = () => {
-    socketRef.current?.send(JSON.stringify({ type: "init_game" }));
-  };
+const initGame = () => {
+  if (socketRef.current?.readyState === WebSocket.OPEN) {
+    socketRef.current.send(JSON.stringify({ type: "init_game" }));
+  } else {
+    socketRef.current?.addEventListener("open", () => {
+      socketRef.current?.send(JSON.stringify({ type: "init_game" }));
+    }, { once: true });
+  }
+};
 
   const sendMove = (move: Move) => {
     socketRef.current?.send(JSON.stringify({ type: "move", payload: { move } }));
